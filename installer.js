@@ -35,7 +35,7 @@ async function runInstaller() {
                     body: file.buffer 
                 });
             } else {
-                let dest = file.name;
+                let dest = '/' + file.name;
                 await fetch('/api/install/file', {
                     method: 'POST',
                     headers: { 'X-Dest-Path': dest },
