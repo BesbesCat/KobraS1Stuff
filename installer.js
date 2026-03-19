@@ -1,50 +1,69 @@
-// This runs in the browser context once fetched
 async function runInstaller() {
     const status = document.getElementById('install-progress');
-    const updateUrl = "https://cdn.jsdelivr.net/gh/BesbesCat/KobraS1Stuff@main/update.tar";
-    
-    status.innerText = "Downloading bundle.tar...";
-    const response = await fetch(updateUrl);
-    const buffer = await response.arrayBuffer();
-    
-    // Note: You would include a small untar library in this script
-    const files = await untar(buffer); 
+    const TAR_LIB_URL = "https://cdn.jsdelivr.net/npm/js-untar@latest/build/dist/untar.js";
+    const BUNDLE_URL = "https://cdn.jsdelivr.net/gh/BesbesCat/KobraS1Stuff@main/update.tar";
 
-    for (let file of files) {
-        status.innerText = `Processing ${file.name}...`;
-
-        if (file.name === "firmware.bin") {
-            // Path A: Update Core Firmware
-            await fetch('/api/install/firmware', { method: 'POST', body: file.buffer });
-        } 
-        else if (file.name.startsWith("www/") || file.name.startsWith("fx/")) {
-            // Path B & C: Surgical File Update
-            // Map 'www/index.html' to '/index.html' and 'fx/test.lua' to '/fx/test.lua'
-            let destPath = file.name.startsWith("www/") ? 
-                           file.name.replace("www/", "/") : 
-                           "/" + file.name;
-
-            await fetch('/api/install/file', {
-                method: 'POST',
-                headers: { 'X-Dest-Path': destPath },
-                body: file.buffer
+    try {
+        // 1. Load the untar library if it's not already there
+        if (typeof untar === 'undefined') {
+            status.innerText = "Loading extraction tools...";
+            await new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = TAR_LIB_URL;
+                script.onload = resolve;
+                script.onerror = reject;
+                document.head.appendChild(script);
             });
         }
-    }
 
+        // 2. Fetch the latest.tar
+        status.innerText = "Downloading package...";
+        const response = await fetch(BUNDLE_URL);
+        const arrayBuffer = await response.arrayBuffer();
+
+        // 3. Unpack
+        status.innerText = "Unpacking...";
+        const files = await untar(arrayBuffer);
+
+        for (const file of files) {
+            status.innerText = `Installing: ${file.name}`;
+            
+            // Route files to correct endpoints
+            if (file.name === "firmware.bin") {
+                await fetch('/api/install/firmware', { 
+                    method: 'POST', 
+                    body: file.buffer 
+                });
+            } else {
+                // Determine destination: strip 'www/' prefix or keep 'fx/'
+                let dest = file.name.startsWith('www/') ? 
+                           file.name.replace('www/', '/') : 
+                           '/' + file.name;
+
+                await fetch('/api/install/file', {
+                    method: 'POST',
+                    headers: { 'X-Dest-Path': dest },
+                    body: file.buffer
+                });
+            }
+        }
     // Path D: Custom Configs (Optional)
 //    status.innerText = "Applying recommended zone defaults...";
 //    await fetch('/api/config', { 
 //        method: 'POST', 
 //        body: JSON.stringify({ /* custom preset data */ }) 
 //    });
+        status.innerText = "Installation Successful! Rebooting...";
+        await fetch('/api/reboot', { method: 'POST' });
+        
+        // Refresh the page after 6 seconds
+        setTimeout(() => { window.location.reload(); }, 6000);
 
-    // Path E: Reboot
-    status.innerText = "Success! Rebooting in 5 seconds...";
-    await fetch('/api/reboot', { method: 'POST' });
-    
-    setTimeout(() => { window.location.reload(); }, 6000);
+    } catch (err) {
+        status.innerText = "Critical Error: " + err.message;
+        console.error(err);
+    }
 }
 
-// Start execution
+// Execute immediately
 runInstaller();
