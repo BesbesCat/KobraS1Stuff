@@ -35,11 +35,7 @@ async function runInstaller() {
                     body: file.buffer 
                 });
             } else {
-                // Determine destination: strip 'www/' prefix or keep 'fx/'
-                let dest = file.name.startsWith('www/') ? 
-                           file.name.replace('www/', '/') : 
-                           '/' + file.name;
-
+                let dest = file.name;
                 await fetch('/api/install/file', {
                     method: 'POST',
                     headers: { 'X-Dest-Path': dest },
