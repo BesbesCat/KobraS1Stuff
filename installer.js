@@ -2,7 +2,7 @@ const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 async function runInstaller() {
     const status = document.getElementById('install-progress');
     const TAR_LIB_URL = "https://cdn.jsdelivr.net/npm/js-untar@latest/build/dist/untar.js";
-    const BUNDLE_URL = "https://cdn.jsdelivr.net/gh/BesbesCat/KobraS1Stuff@main/update.tar";
+    const BUNDLE_URL = "https://cdn.jsdelivr.net/gh/BesbesCat/KobraS1Stuff@master/update.tar";
 
     try {
         // 1. Load the untar library if it's not already there
