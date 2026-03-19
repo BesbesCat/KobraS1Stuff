@@ -1,7 +1,7 @@
 // This runs in the browser context once fetched
 async function runInstaller() {
     const status = document.getElementById('install-progress');
-    const updateUrl = "https://github.com/BesbesCat/KobraS1Stuff/raw/refs/heads/main/update.tar";
+    const updateUrl = "https://cdn.jsdelivr.net/gh/BesbesCat/KobraS1Stuff@main/update.tar";
     
     status.innerText = "Downloading bundle.tar...";
     const response = await fetch(updateUrl);
