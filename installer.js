@@ -1,39 +1,50 @@
-// This script is loaded dynamically by the UI
-async function startInstallation() {
+// This runs in the browser context once fetched
+async function runInstaller() {
     const status = document.getElementById('install-progress');
-    const updateUrl = "https://github.com/BesbesCat/KobraS1Stuff/raw/refs/heads/main/update.tar";
+    const updateUrl = "https://github.com/user/repo/releases/latest/download/bundle.tar";
     
-    status.innerText = "Downloading package...";
-    const resp = await fetch(updateUrl);
-    const blob = await resp.blob();
+    status.innerText = "Downloading bundle.tar...";
+    const response = await fetch(updateUrl);
+    const buffer = await response.arrayBuffer();
     
-    // We use a library like js-untar (must be available in the browser)
-    const files = await untar(await blob.arrayBuffer());
+    // Note: You would include a small untar library in this script
+    const files = await untar(buffer); 
 
-    for (const file of files) {
-        // file.name example: "firmware.bin", "www/index.html", "fx/rainbow.lua"
-        status.innerText = `Installing: ${file.name}`;
+    for (let file of files) {
+        status.innerText = `Processing ${file.name}...`;
 
         if (file.name === "firmware.bin") {
+            // Path A: Update Core Firmware
             await fetch('/api/install/firmware', { method: 'POST', body: file.buffer });
-        } else {
-            // Determine destination
-            let dest = file.name.startsWith('www/') ? 
-                       file.name.replace('www/', '/') : 
-                       '/' + file.name;
+        } 
+        else if (file.name.startsWith("www/") || file.name.startsWith("fx/")) {
+            // Path B & C: Surgical File Update
+            // Map 'www/index.html' to '/index.html' and 'fx/test.lua' to '/fx/test.lua'
+            let destPath = file.name.startsWith("www/") ? 
+                           file.name.replace("www/", "/") : 
+                           "/" + file.name;
 
             await fetch('/api/install/file', {
                 method: 'POST',
-                headers: { 'X-Dest-Path': dest },
+                headers: { 'X-Dest-Path': destPath },
                 body: file.buffer
             });
         }
     }
 
-    status.innerText = "Installation Complete. Rebooting...";
+    // Path D: Custom Configs (Optional)
+//    status.innerText = "Applying recommended zone defaults...";
+//    await fetch('/api/config', { 
+//        method: 'POST', 
+//        body: JSON.stringify({ /* custom preset data */ }) 
+//    });
+
+    // Path E: Reboot
+    status.innerText = "Success! Rebooting in 5 seconds...";
     await fetch('/api/reboot', { method: 'POST' });
     
-    setTimeout(() => { window.location.reload(); }, 5000);
+    setTimeout(() => { window.location.reload(); }, 6000);
 }
 
-startInstallation();
+// Start execution
+runInstaller();
