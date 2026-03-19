@@ -34,6 +34,7 @@ async function runInstaller() {
                     method: 'POST', 
                     body: file.buffer 
                 });
+                setTimeout(() => {  }, 1000);
             } else {
                 let dest = '/' + file.name;
                 await fetch('/api/install/file', {
@@ -49,6 +50,7 @@ async function runInstaller() {
 //        method: 'POST', 
 //        body: JSON.stringify({ /* custom preset data */ }) 
 //    });
+        setTimeout(() => {  }, 1000);
         status.innerText = "Installation Successful! Rebooting...";
         await fetch('/api/reboot', { method: 'POST' });
         
