@@ -43,7 +43,7 @@ async function runInstaller() {
                     body: file.buffer
                 });
             }
-            await sleep(300);
+            await sleep(3000);
         }
     // Path D: Custom Configs (Optional)
 //    status.innerText = "Applying recommended zone defaults...";
